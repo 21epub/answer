@@ -8,6 +8,8 @@ import { FollowingTags } from '@/components';
 import QuestionList from '@/components/QuestionList';
 import HotQuestions from '@/components/HotQuestions';
 import { siteInfoStore, loggedUserInfoStore } from '@/stores';
+import LeftBar from '@/components/EpubLeftBar';
+import EpubActiveUsers from '@/components/EpubActiveUsers';
 
 const Questions: FC = () => {
   const { t } = useTranslation('translation', { keyPrefix: 'question' });
@@ -25,10 +27,13 @@ const Questions: FC = () => {
   return (
     <Container className="pt-4 mt-2 mb-5">
       <Row className="justify-content-center">
-        <Col xxl={7} lg={8} sm={12}>
+        <Col xxl={2} lg={3} className="mt-5 mt-lg-0">
+          <LeftBar />
+        </Col>
+        <Col xxl={6} lg={4} sm={12}>
           <QuestionList source="questions" />
         </Col>
-        <Col xxl={3} lg={4} sm={12} className="mt-5 mt-lg-0">
+        <Col xxl={2} lg={3} sm={12} className="mt-5 mt-lg-0">
           {!loggedUser.access_token && (
             <div className="card mb-4">
               <div className="card-body">
@@ -50,6 +55,7 @@ const Questions: FC = () => {
           )}
           {loggedUser.access_token && <FollowingTags />}
           <HotQuestions />
+          <EpubActiveUsers />
         </Col>
       </Row>
     </Container>

@@ -33,6 +33,7 @@ import PageTags from './PageTags';
 import QuestionListLoader from './QuestionListLoader';
 import TagsLoader from './TagsLoader';
 import Counts from './Counts';
+import EpubCustomizeGroup from './EpubCustomizeGroup';
 
 export {
   Avatar,
@@ -72,5 +73,6 @@ export {
   QuestionListLoader,
   TagsLoader,
   Counts,
+  EpubCustomizeGroup,
 };
 export type { EditorRef, JSONSchema, UISchema };

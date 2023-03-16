@@ -1409,4 +1409,13 @@ ui:
   prompt:
     leave_page: "Are you sure you want to leave the page?"
     changes_not_save: "Your changes may not be saved."
-
+  epub360:
+    tags:
+      popular_tags: Hot Tags
+      home_more: More…
+    home:
+      active_users_without_colon: "Active Users"
+    personal:
+      my_answers: My Answer
+      my_questions: My Question
+      my_reputation: My Reputation  
