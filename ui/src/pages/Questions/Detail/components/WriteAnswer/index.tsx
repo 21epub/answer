@@ -3,13 +3,15 @@ import { Form, Button } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 
 import { marked } from 'marked';
-import classNames from 'classnames';
+import { generateHtmlFromState, TextEditor } from '@21epub-ui/text-editor';
 
 import { usePromptWithUnload } from '@/hooks';
-import { Editor, Modal, TextArea } from '@/components';
+import { Modal, TextArea } from '@/components';
 import { FormDataType } from '@/common/interface';
 import { postAnswer } from '@/services';
 import { guard, handleFormError } from '@/utils';
+
+import MaterialModal, { ModalStateType } from './MaterialModal';
 
 interface Props {
   visible?: boolean;
@@ -33,8 +35,9 @@ const Index: FC<Props> = ({ visible = false, data, callback }) => {
     },
   });
   const [showEditor, setShowEditor] = useState<boolean>(visible);
-  const [focusType, setFocusType] = useState('');
-  const [editorFocusState, setEditorFocusState] = useState(false);
+  const [, setFocusType] = useState('');
+  const [, setEditorFocusState] = useState(false);
+  const [modalState, setModalState] = useState<ModalStateType>({ open: false });
 
   usePromptWithUnload({
     when: Boolean(formData.content.value),
@@ -151,27 +154,30 @@ const Index: FC<Props> = ({ visible = false, data, callback }) => {
             </div>
           )}
           {showEditor && (
-            <Editor
-              className={classNames(
-                'form-control p-0',
-                focusType === 'answer' && 'focus',
-              )}
-              value={formData.content.value}
-              autoFocus={editorFocusState}
-              onChange={(val) => {
-                setFormData({
-                  content: {
-                    value: val,
-                    isInvalid: false,
-                    errorMsg: '',
-                  },
+            <TextEditor
+              initialState={formData.content.value}
+              onInsert={(type, callback_) => {
+                if (type === 'image') {
+                  setModalState({
+                    open: true,
+                    onInsert: (link) => {
+                      callback_({ src: link.value, title: '' });
+                    },
+                  });
+                }
+              }}
+              style={{
+                height: '400px',
+                border: '1px #d9d9d9 solid',
+              }}
+              onChange={(editorState, editor) => {
+                editor.update(async () => {
+                  const state = editorState.toJSON();
+                  const content = await generateHtmlFromState(state);
+                  console.log('content', content);
+                  // form?.setFieldsValue({state})
+                  // form?.setFieldsValue({content})
                 });
-              }}
-              onFocus={() => {
-                setFocusType('answer');
-              }}
-              onBlur={() => {
-                setFocusType('');
               }}
             />
           )}
@@ -186,6 +192,13 @@ const Index: FC<Props> = ({ visible = false, data, callback }) => {
         <Button onClick={clickBtn}>{t('add_another_answer')}</Button>
       ) : (
         <Button onClick={clickBtn}>{t('btn_name')}</Button>
+      )}
+      {modalState.open && (
+        <MaterialModal
+          visible={modalState.open}
+          setModalState={setModalState}
+          onInsert={modalState?.onInsert}
+        />
       )}
     </Form>
   );

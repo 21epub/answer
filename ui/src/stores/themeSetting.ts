@@ -11,7 +11,10 @@ interface IType {
 
 const store = create<IType>((set) => ({
   theme: 'default',
-  theme_options: [{ label: 'Default', value: 'default' }],
+  theme_options: [
+    { label: 'Default', value: 'default' },
+    { label: 'Round', value: 'round' },
+  ],
   theme_config: {
     default: {
       navbar_style: 'colored',

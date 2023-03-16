@@ -6,6 +6,8 @@ import Color from 'color';
 import { shiftColor, tintColor, shadeColor } from '@/utils';
 import { themeSettingStore } from '@/stores';
 
+import { themeMap } from './theme-map';
+
 const Index: FC = () => {
   const { theme, theme_config } = themeSettingStore((_) => _);
   let primaryColor;
@@ -85,6 +87,7 @@ const Index: FC = () => {
             `}
         </style>
       )}
+      {theme !== 'default' && <style>{themeMap[theme]}</style>}
     </Helmet>
   );
 };
