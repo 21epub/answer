@@ -499,12 +499,12 @@ func (qs *QuestionService) UpdateQuestion(ctx context.Context, req *schema.Quest
 		oldtagNameList = append(oldtagNameList, tag.SlugName)
 	}
 
-	// isChange := qs.tagCommon.CheckTagsIsChange(ctx, tagNameList, oldtagNameList)
+	isChange := qs.tagCommon.CheckTagsIsChange(ctx, tagNameList, oldtagNameList)
 
 	//If the content is the same, ignore it
-	// if dbinfo.Title == req.Title && dbinfo.OriginalText == req.Content && !isChange {
-	// 	return
-	// }
+	if dbinfo.Title == req.Title && dbinfo.OriginalText == req.Content && !isChange {
+		return
+	}
 
 	Tags, tagerr := qs.tagCommon.GetTagListByNames(ctx, tagNameList)
 	if tagerr != nil {
