@@ -56,6 +56,7 @@ var migrations = []Migration{
 	NewMigration("add user role", addRoleFeatures, false),
 	NewMigration("add theme and private mode", addThemeAndPrivateMode, true),
 	NewMigration("add new answer notification", addNewAnswerNotification, true),
+	NewMigration("answer add content_answer field", addAnswerContent, true),
 }
 
 // GetCurrentDBVersion returns the current db version

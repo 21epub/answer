@@ -152,6 +152,8 @@ func (as *AnswerService) Insert(ctx context.Context, req *schema.AnswerAddReq) (
 	insertData.RevisionID = "0"
 	insertData.LastEditUserID = "0"
 	insertData.Status = entity.AnswerStatusAvailable
+	// db add ContentJson
+	insertData.ContentJson = req.ContentJson
 	//insertData.UpdatedAt = now
 	if err = as.answerRepo.AddAnswer(ctx, insertData); err != nil {
 		return "", err
@@ -231,11 +233,12 @@ func (as *AnswerService) Update(ctx context.Context, req *schema.AnswerUpdateReq
 	if !exist {
 		return "", nil
 	}
+	// isChangeJson := checker.MapsEqual(answerInfo.ContentJson, req.ContentJson)
 
 	//If the content is the same, ignore it
-	if answerInfo.OriginalText == req.Content {
-		return "", nil
-	}
+	// if answerInfo.OriginalText == req.Content {
+	// 	return "", nil
+	// }
 
 	now := time.Now()
 	insertData := new(entity.Answer)
@@ -245,6 +248,8 @@ func (as *AnswerService) Update(ctx context.Context, req *schema.AnswerUpdateReq
 	insertData.OriginalText = req.Content
 	insertData.ParsedText = req.HTML
 	insertData.UpdatedAt = now
+	// db add ContentJson
+	insertData.ContentJson = req.ContentJson
 
 	insertData.LastEditUserID = "0"
 	if answerInfo.UserID != req.UserID {
@@ -265,7 +270,7 @@ func (as *AnswerService) Update(ctx context.Context, req *schema.AnswerUpdateReq
 	if !canUpdate {
 		revisionDTO.Status = entity.RevisionUnreviewedStatus
 	} else {
-		if err = as.answerRepo.UpdateAnswer(ctx, insertData, []string{"original_text", "parsed_text", "updated_at", "last_edit_user_id"}); err != nil {
+		if err = as.answerRepo.UpdateAnswer(ctx, insertData, []string{"original_text", "parsed_text", "updated_at", "last_edit_user_id", "content_json"}); err != nil {
 			return "", err
 		}
 		err = as.questionCommon.UpdataPostTime(ctx, req.QuestionID)

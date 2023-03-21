@@ -24,6 +24,7 @@ type AnswerAddReq struct {
 	Content    string `validate:"required,notblank,gte=6,lte=65535" json:"content"`
 	HTML       string `json:"-"`
 	UserID     string `json:"-"`
+	ContentJson  map[string]interface{}  `json:"content_json"`
 }
 
 func (req *AnswerAddReq) Check() (errFields []*validator.FormErrorField, err error) {
@@ -42,6 +43,7 @@ type AnswerUpdateReq struct {
 	NoNeedReview bool   `json:"-"`
 	// whether user can edit it
 	CanEdit bool `json:"-"`
+	ContentJson  map[string]interface{}  `json:"content_json"`
 }
 
 func (req *AnswerUpdateReq) Check() (errFields []*validator.FormErrorField, err error) {
@@ -86,6 +88,8 @@ type AnswerInfo struct {
 
 	// MemberActions
 	MemberActions []*PermissionMemberAction `json:"member_actions"`
+	// 
+	ContentJson  map[string]interface{}   `json:"content_json"`
 }
 
 type AdminAnswerInfo struct {

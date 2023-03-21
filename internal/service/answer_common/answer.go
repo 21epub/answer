@@ -68,6 +68,7 @@ func (as *AnswerCommon) ShowFormat(ctx context.Context, data *entity.Answer) *sc
 	info.VoteCount = data.VoteCount
 	info.CreateTime = data.CreatedAt.Unix()
 	info.UpdateTime = data.UpdatedAt.Unix()
+	info.ContentJson = data.ContentJson
 	if data.UpdatedAt.Unix() < 1 {
 		info.UpdateTime = 0
 	}

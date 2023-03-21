@@ -43,6 +43,7 @@ type Question struct {
 	LastAnswerID     string    `xorm:"not null default 0 BIGINT(20) last_answer_id"`
 	PostUpdateTime   time.Time `xorm:"post_update_time TIMESTAMP"`
 	RevisionID       string    `xorm:"not null default 0 BIGINT(20) revision_id"`
+	ContentJson  map[string]interface{}   `xorm:"MediumText JSON 'content_json'" json:"content_json"`
 }
 
 // TableName question table name
