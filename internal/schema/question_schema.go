@@ -51,6 +51,8 @@ type QuestionAdd struct {
 	// user id
 	UserID string `json:"-"`
 	QuestionPermission
+	// create question can pass content_json （not required）
+	ContentJson  map[string]interface{}  `json:"content_json"`
 }
 
 func (req *QuestionAdd) Check() (errFields []*validator.FormErrorField, err error) {
@@ -103,6 +105,8 @@ type QuestionUpdate struct {
 	UserID       string `json:"-"`
 	NoNeedReview bool   `json:"-"`
 	QuestionPermission
+	// update question can pass content_json（not required）
+	ContentJson  map[string]interface{}  `json:"content_json"`
 }
 
 func (req *QuestionUpdate) Check() (errFields []*validator.FormErrorField, err error) {
@@ -156,6 +160,8 @@ type QuestionInfo struct {
 
 	// MemberActions
 	MemberActions []*PermissionMemberAction `json:"member_actions"`
+	// 
+	ContentJson  map[string]interface{}   `json:"content_json"`
 }
 
 // UpdateQuestionResp update question resp

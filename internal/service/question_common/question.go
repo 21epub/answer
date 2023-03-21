@@ -529,6 +529,7 @@ func (qs *QuestionCommon) ShowFormat(ctx context.Context, data *entity.Question)
 
 	}
 	info.Tags = make([]*schema.TagResp, 0)
+	info.ContentJson = data.ContentJson
 	return &info
 }
 func (qs *QuestionCommon) ShowFormatWithTag(ctx context.Context, data *entity.QuestionWithTagsRevision) *schema.QuestionInfo {

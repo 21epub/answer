@@ -268,6 +268,7 @@ func (qs *QuestionService) AddQuestion(ctx context.Context, req *schema.Question
 	question.Status = entity.QuestionStatusAvailable
 	question.RevisionID = "0"
 	question.CreatedAt = now
+	question.ContentJson = req.ContentJson
 	//question.UpdatedAt = nil
 	err = qs.questionRepo.AddQuestion(ctx, question)
 	if err != nil {
@@ -481,6 +482,8 @@ func (qs *QuestionService) UpdateQuestion(ctx context.Context, req *schema.Quest
 	question.PostUpdateTime = now
 	question.UserID = dbinfo.UserID
 	question.LastEditUserID = req.UserID
+	// get ContentJson
+	question.ContentJson = req.ContentJson
 
 	oldTags, tagerr := qs.tagCommon.GetObjectEntityTag(ctx, question.ID)
 	if tagerr != nil {
@@ -569,7 +572,8 @@ func (qs *QuestionService) UpdateQuestion(ctx context.Context, req *schema.Quest
 		//Direct modification
 		revisionDTO.Status = entity.RevisionReviewPassStatus
 		//update question to db
-		saveerr := qs.questionRepo.UpdateQuestion(ctx, question, []string{"title", "original_text", "parsed_text", "updated_at", "post_update_time", "last_edit_user_id"})
+		// add content_json field
+		saveerr := qs.questionRepo.UpdateQuestion(ctx, question, []string{"title", "original_text", "parsed_text", "updated_at", "post_update_time", "last_edit_user_id", "content_json"})
 		if saveerr != nil {
 			return questionInfo, saveerr
 		}
