@@ -5,7 +5,7 @@ import (
 	"github.com/answerdev/answer/internal/base/handler"
 	"github.com/answerdev/answer/internal/schema"
 	"github.com/answerdev/answer/internal/service"
-	"github.com/answerdev/answer/internal/base/translator"
+	// "github.com/answerdev/answer/internal/base/translator"
 	// "github.com/segmentfault/pacman/log"
 	"github.com/gin-gonic/gin"
 )
@@ -15,8 +15,8 @@ var UserstoreUrl string = service.GetEnv("USER_STORE_AUTH_URL", "https://yapi.ep
 func (uc *UserController) UserstoreLogin(ctx *gin.Context) {
     token := ctx.Query("token")
 	// 获取用户信息
-	userstoreUser := &schema.UserstoretUser{}
-    err := service.GetUserstoreUserJson(UserstoreUrl, token, userstoreUser)
+	userstoreUser := &schema.UserStoretUser{}
+    err := service.GetUserStoreUser(UserstoreUrl, token, userstoreUser)
 	if err != nil {
 		handler.HandleResponse(ctx, err, nil)
 		return
@@ -30,7 +30,7 @@ func (uc *UserController) UserstoreLogin(ctx *gin.Context) {
 		return
 	}
 	userstoreUser.IP = ctx.ClientIP()
-	resp, errFields, err := uc.userService.UserstoreBackend(ctx, userstoreUser)
+	resp, err := uc.userService.UserStoreBackend(ctx, userstoreUser)
 	if err != nil {
 		handler.HandleResponse(ctx, err, nil)
 		return
@@ -39,13 +39,14 @@ func (uc *UserController) UserstoreLogin(ctx *gin.Context) {
 		handler.HandleResponse(ctx, errors.New("response is nil"), nil)
 		return
 	}
-	if len(errFields) > 0 {
-		for _, field := range errFields {
-			field.ErrorMsg = translator.
-				Tr(handler.GetLang(ctx), field.ErrorMsg)
-		}
-		handler.HandleResponse(ctx, err, errFields)
-	} else {
-		handler.HandleResponse(ctx, err, resp)
-	}
+	handler.HandleResponse(ctx, err, resp)
+	// if len(errFields) > 0 {
+	// 	for _, field := range errFields {
+	// 		field.ErrorMsg = translator.
+	// 			Tr(handler.GetLang(ctx), field.ErrorMsg)
+	// 	}
+	// 	handler.HandleResponse(ctx, err, errFields)
+	// } else {
+	// 	handler.HandleResponse(ctx, err, resp)
+	// }
 }

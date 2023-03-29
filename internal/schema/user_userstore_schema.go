@@ -1,6 +1,6 @@
 package schema
 
-type UserstoreSubUser struct{
+type UserStoreSubUser struct{
 	NickName string `json:"nickname"`
 	UserkName string `json:"username"`
 	IsSuperuser  bool `json:"is_superuser"`
@@ -8,7 +8,7 @@ type UserstoreSubUser struct{
 
 }
 
-type UserstoretUser struct {
+type UserStoretUser struct {
 	UserName string `json:"username"`
 	IsActive   bool `json:"is_active"`
 	Name string `json:"name"`
@@ -22,14 +22,14 @@ type UserstoretUser struct {
 	Privilege int `json:"privilege"`
 	Phone string `json:"phone"`
 	IP    string `json:"-" `
-	SubUser UserstoreSubUser `json:"subuser"`
+	SubUser UserStoreSubUser `json:"subuser"`
 	Code int        `json:"code"`
 	Msg  string     `json:"msg"`
 }
 
 
 
-func (user *UserstoretUser) StructureEmail() (email string){
+func (user *UserStoretUser) StructureEmail() (email string){
 	email = user.SubUser.UserkName + "@" + user.UserName
 	return
 }
