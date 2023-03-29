@@ -21,19 +21,15 @@ type UserstoretUser struct {
 	SourceType int `json:"source_type"`
 	Privilege int `json:"privilege"`
 	Phone string `json:"phone"`
+	IP    string `json:"-" `
 	SubUser UserstoreSubUser `json:"subuser"`
 	Code int        `json:"code"`
 	Msg  string     `json:"msg"`
 }
 
 
-type Epub360User struct{
-	// name
-	Name string `json:"name"`
-	// email
-	Email string `json:"e_mail"`
-	// password
-	Pass        string `json:"-" `
-	IP          string `json:"-" `
-	DisplayName string `json:"-" `
+
+func (user *UserstoretUser) StructureEmail() (email string){
+	email = user.SubUser.UserkName + "@" + user.UserName
+	return
 }

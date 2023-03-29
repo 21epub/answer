@@ -12,11 +12,11 @@ import (
 
 var UserstoreUrl string = service.GetEnv("USER_STORE_AUTH_URL", "https://yapi.epub360.com/mock/292/v3/api/auth/")
 
-func (uc *UserController) UserEpub360Login(ctx *gin.Context) {
+func (uc *UserController) UserstoreLogin(ctx *gin.Context) {
     token := ctx.Query("token")
 	// 获取用户信息
 	userstoreUser := &schema.UserstoretUser{}
-    err := service.GetResponseJson(UserstoreUrl, token, userstoreUser)
+    err := service.GetUserstoreUserJson(UserstoreUrl, token, userstoreUser)
 	if err != nil {
 		handler.HandleResponse(ctx, err, nil)
 		return
@@ -29,17 +29,8 @@ func (uc *UserController) UserEpub360Login(ctx *gin.Context) {
 		})
 		return
 	}
-	result := &schema.Epub360User{}
-	if handler.BindAndCheck(ctx, result) {
-		return
-	}
-	// 构造answer所需要的用户信息
-	result.IP = ctx.ClientIP()
-	username := userstoreUser.SubUser.UserkName + "@" + userstoreUser.UserName
-	result.Name = username
-	result.Email = username
-	result.DisplayName = userstoreUser.SubUser.NickName
-	resp, errFields, err := uc.userService.Epub360UserBackend(ctx, result)
+	userstoreUser.IP = ctx.ClientIP()
+	resp, errFields, err := uc.userService.UserstoreBackend(ctx, userstoreUser)
 	if err != nil {
 		handler.HandleResponse(ctx, err, nil)
 		return
@@ -55,7 +46,6 @@ func (uc *UserController) UserEpub360Login(ctx *gin.Context) {
 		}
 		handler.HandleResponse(ctx, err, errFields)
 	} else {
-		// ctx.Redirect(http.StatusFound, "/")
 		handler.HandleResponse(ctx, err, resp)
 	}
 }

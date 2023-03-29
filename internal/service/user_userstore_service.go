@@ -16,7 +16,7 @@ import (
 )
 
 var myClient = &http.Client{Timeout: 5 * time.Second}
-func GetResponseJson(url string, token string, target *schema.UserstoretUser) error {
+func GetUserstoreUserJson(url string, token string, target *schema.UserstoretUser) error {
     r, err := myClient.Get(url + "?token=" + token)
     if err != nil {
         return err
@@ -35,20 +35,24 @@ func GetEnv(key string, fallback string) string {
 
 
 // UserRegisterByEmail user register
-func (us *UserService) Epub360UserBackend(ctx context.Context, registerUserInfo *schema.Epub360User) (
+func (us *UserService) UserstoreBackend(ctx context.Context, registerUserInfo *schema.UserstoretUser) (
 	resp *schema.GetUserResp, errFields []*validator.FormErrorField, err error,
 ) {
 	// 根据email查找用户是否存在
-	userInfo, _, err := us.userRepo.GetByEmail(ctx, registerUserInfo.Email)
+	userInfo, _, err := us.userRepo.GetByEmail(ctx, registerUserInfo.StructureEmail())
 	if err != nil {
 		return nil, nil, err
 	}
 	if userInfo.ID == "" {
 		// 用户不存在 注册&&登录
 		userInfo, err := us.Epub360UserRegister(ctx, registerUserInfo)
+		if err != nil {
+			log.Error("userstore register", err)
+			return nil, nil, err
+		}
 		resp, err := us.Epub360UserLogin(ctx, userInfo, registerUserInfo)
 		if err != nil {
-			log.Error(err)
+			log.Error("userstore login", err)
 			return nil, nil, err
 		}
 		return resp, nil, nil
@@ -64,19 +68,18 @@ func (us *UserService) Epub360UserBackend(ctx context.Context, registerUserInfo 
 }
 
 // 登录
-func (us *UserService) Epub360UserLogin(ctx context.Context, userInfo *entity.User, registerUserInfo *schema.Epub360User) (resp *schema.GetUserResp, err error) {
-	// 
+func (us *UserService) Epub360UserLogin(ctx context.Context, userInfo *entity.User, registerUserInfo *schema.UserstoretUser) (resp *schema.GetUserResp, err error) {
 	// if userInfo.Status == entity.UserStatusDeleted {
 	// 	return nil, errors.BadRequest(reason.EmailOrPasswordWrong)
 	// }
 	// DisplayName不同则更新
-	if userInfo.DisplayName != registerUserInfo.DisplayName{
-		err = us.userRepo.UpdateDisplayName(ctx, userInfo.ID, registerUserInfo.DisplayName)
+	if userInfo.DisplayName != registerUserInfo.SubUser.NickName {
+		err = us.userRepo.UpdateDisplayName(ctx, userInfo.ID, registerUserInfo.SubUser.NickName)
 		if err != nil {
 			log.Error("UpdateUserinfo", err.Error())
 		}else{
 			// userInfo.DisplayName = registerUserInfo.DisplayName
-			userInfo, _, _ = us.userRepo.GetByEmail(ctx, registerUserInfo.Email)
+			userInfo, _, _ = us.userRepo.GetByEmail(ctx, registerUserInfo.StructureEmail())
 		}
 	}
 	err = us.userRepo.UpdateLastLoginDate(ctx, userInfo.ID)
@@ -113,24 +116,16 @@ func (us *UserService) Epub360UserLogin(ctx context.Context, userInfo *entity.Us
 }
 
 // 查询不到，进行注册
-func (us *UserService) Epub360UserRegister(ctx context.Context, registerUserInfo *schema.Epub360User) (userInfo *entity.User, err error) {
-	// if has {
-	// 	errFields = append(errFields, &validator.FormErrorField{
-	// 		ErrorField: "e_mail",
-	// 		ErrorMsg:   reason.EmailDuplicate,
-	// 	})
-	// 	return nil, errFields, errors.BadRequest(reason.EmailDuplicate)
-	// }
+func (us *UserService) Epub360UserRegister(ctx context.Context, registerUserInfo *schema.UserstoretUser) (userInfo *entity.User, err error) {
 	userInfo = &entity.User{}
-	userInfo.EMail = registerUserInfo.Email
-	userInfo.DisplayName = registerUserInfo.DisplayName
-	userInfo.Pass, err = us.encryptPassword(ctx, registerUserInfo.Pass)
-	if err != nil {
-		return nil, err
-	}
+	userInfo.EMail = registerUserInfo.StructureEmail()
+	userInfo.DisplayName = registerUserInfo.SubUser.NickName
+	// userInfo.Pass, err = us.encryptPassword(ctx, registerUserInfo.Pass)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	// username
-	userInfo.Username = registerUserInfo.Name
-	// userInfo.Username, err = us.userCommonService.MakeUsername(ctx, registerUserInfo.Name)
+	userInfo.Username, err = us.userCommonService.MakeUsername(ctx, registerUserInfo.SubUser.UserkName)
 	userInfo.IPInfo = registerUserInfo.IP
 	userInfo.LastLoginDate = time.Now()
 	// 声望初始化为1
