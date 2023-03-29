@@ -98,6 +98,7 @@ func (a *AnswerAPIRouter) RegisterMustUnAuthAnswerAPIRouter(r *gin.RouterGroup) 
 
 	// user
 	r.POST("/user/login/email", a.userController.UserEmailLogin)
+	r.GET("/user/login/epub360", a.userController.UserEpub360Login)
 	r.POST("/user/register/email", a.userController.UserRegisterByEmail)
 	r.GET("/user/register/captcha", a.userController.UserRegisterCaptcha)
 	r.POST("/user/email/verification", a.userController.UserVerifyEmail)
