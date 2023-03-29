@@ -101,6 +101,14 @@ func (ur *userRepo) UpdateEmail(ctx context.Context, userID, email string) (err 
 	return
 }
 
+func (ur *userRepo) UpdateDisplayName(ctx context.Context, userID, DisplayName string) (err error) {
+	_, err = ur.data.DB.Where("id = ?", userID).Update(&entity.User{DisplayName: DisplayName})
+	if err != nil {
+		err = errors.InternalServer(reason.DatabaseError).WithError(err).WithStack()
+	}
+	return
+}
+
 func (ur *userRepo) UpdateLanguage(ctx context.Context, userID, language string) (err error) {
 	_, err = ur.data.DB.Where("id = ?", userID).Update(&entity.User{Language: language})
 	if err != nil {
