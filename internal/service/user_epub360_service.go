@@ -132,8 +132,6 @@ func (us *UserService) Epub360UserRegister(ctx context.Context, registerUserInfo
 	userInfo.Username = registerUserInfo.Name
 	// userInfo.Username, err = us.userCommonService.MakeUsername(ctx, registerUserInfo.Name)
 	userInfo.IPInfo = registerUserInfo.IP
-	userInfo.MailStatus = entity.EmailStatusToBeVerified
-	userInfo.Status = entity.UserStatusAvailable
 	userInfo.LastLoginDate = time.Now()
 	// 声望初始化为1
 	userInfo.Rank = 1
