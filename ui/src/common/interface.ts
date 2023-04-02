@@ -81,6 +81,10 @@ export interface LoginReqParams {
   captcha_code?: string;
 }
 
+export interface SSOLoginReqParams {
+  token: string;
+}
+
 export interface RegisterReqParams extends LoginReqParams {
   name: string;
 }

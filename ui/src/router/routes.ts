@@ -143,7 +143,7 @@ const routes: RouteNode[] = [
       },
       {
         path: 'users/login',
-        page: 'pages/Users/Login',
+        page: 'pages/Users/Login/SSO',
         guard: () => {
           const notLogged = guard.notLogged();
           if (notLogged.ok) {
