@@ -98,6 +98,12 @@ export const login = (params: Type.LoginReqParams) => {
   );
 };
 
+export const SSOLogin = (params: Type.SSOLoginReqParams) => {
+  return request.get<Type.UserInfoRes>(
+    `/answer/api/v1/user/login/userstore?token=${params.token}`,
+  );
+};
+
 export const register = (params: Type.RegisterReqParams) => {
   return request.post<any>('/answer/api/v1/user/register/email', params);
 };
