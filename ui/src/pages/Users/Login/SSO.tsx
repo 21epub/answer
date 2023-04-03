@@ -33,7 +33,7 @@ const Index: React.FC = () => {
   const token = searchParams.get('token');
 
   const redirectToSSO = () => {
-    const SSO_URL = 'https://url.to/user/login'; // SSO_URL should request from Config
+    const SSO_URL = `${process.env.SSO_PREFIX}user/login`; // SSO_URL should request from Config
     const redirectUrl = addHashParamToUrl(
       addHashParamToUrl(SSO_URL, 'redirect', window.location.href),
       'sso',
