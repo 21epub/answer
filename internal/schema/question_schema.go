@@ -45,7 +45,7 @@ type QuestionAdd struct {
 	// content
 	Content string `validate:"required,notblank,gte=6,lte=65535" json:"content"`
 	// html
-	HTML string `json:"-"`
+	HTML string `json:"html"`
 	// tags
 	Tags []*TagItem `validate:"required,dive" json:"tags"`
 	// user id
@@ -56,7 +56,7 @@ type QuestionAdd struct {
 }
 
 func (req *QuestionAdd) Check() (errFields []*validator.FormErrorField, err error) {
-	req.HTML = converter.Markdown2HTML(req.Content)
+	// req.HTML = converter.Markdown2HTML(req.Content)
 	for _, tag := range req.Tags {
 		if len(tag.OriginalText) > 0 {
 			tag.ParsedText = converter.Markdown2HTML(tag.OriginalText)
@@ -96,7 +96,7 @@ type QuestionUpdate struct {
 	// content
 	Content string `validate:"required,notblank,gte=6,lte=65535" json:"content"`
 	// html
-	HTML string `json:"-"`
+	HTML string `json:"html"`
 	// tags
 	Tags []*TagItem `validate:"required,dive" json:"tags"`
 	// edit summary
@@ -110,7 +110,7 @@ type QuestionUpdate struct {
 }
 
 func (req *QuestionUpdate) Check() (errFields []*validator.FormErrorField, err error) {
-	req.HTML = converter.Markdown2HTML(req.Content)
+	// req.HTML = converter.Markdown2HTML(req.Content)
 	return nil, nil
 }
 

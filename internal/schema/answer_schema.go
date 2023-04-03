@@ -2,7 +2,7 @@ package schema
 
 import (
 	"github.com/answerdev/answer/internal/base/validator"
-	"github.com/answerdev/answer/pkg/converter"
+	// "github.com/answerdev/answer/pkg/converter"
 )
 
 // RemoveAnswerReq delete answer request
@@ -22,13 +22,13 @@ const (
 type AnswerAddReq struct {
 	QuestionID string `json:"question_id"`
 	Content    string `validate:"required,notblank,gte=6,lte=65535" json:"content"`
-	HTML       string `json:"-"`
+	HTML       string `json:"html"`
 	UserID     string `json:"-"`
 	ContentJson  map[string]interface{}  `json:"content_json"`
 }
 
 func (req *AnswerAddReq) Check() (errFields []*validator.FormErrorField, err error) {
-	req.HTML = converter.Markdown2HTML(req.Content)
+	// req.HTML = converter.Markdown2HTML(req.Content)
 	return nil, nil
 }
 
@@ -38,7 +38,7 @@ type AnswerUpdateReq struct {
 	Title        string `json:"title"`
 	Content      string `validate:"required,notblank,gte=6,lte=65535" json:"content"`
 	EditSummary  string `validate:"omitempty" json:"edit_summary"`
-	HTML         string `json:"-"`
+	HTML         string `json:"html"`
 	UserID       string `json:"-"`
 	NoNeedReview bool   `json:"-"`
 	// whether user can edit it
@@ -47,7 +47,7 @@ type AnswerUpdateReq struct {
 }
 
 func (req *AnswerUpdateReq) Check() (errFields []*validator.FormErrorField, err error) {
-	req.HTML = converter.Markdown2HTML(req.Content)
+	// req.HTML = converter.Markdown2HTML(req.Content)
 	return nil, nil
 }
 
