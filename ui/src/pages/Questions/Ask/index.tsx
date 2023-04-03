@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button } from 'react-bootstrap';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import dayjs from 'dayjs';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
+import { generateHtmlFromState, TextEditor } from '@21epub-ui/text-editor';
 
 import { usePageTags, usePromptWithUnload } from '@/hooks';
 import { Editor, EditorRef, TagSelector } from '@/components';
@@ -21,6 +22,9 @@ import {
 } from '@/services';
 import { handleFormError } from '@/utils';
 import { pathFactory } from '@/router/pathFactory';
+import MaterialModal, {
+  ModalStateType,
+} from '../Detail/components/WriteAnswer/MaterialModal';
 
 import SearchQuestion from './components/SearchQuestion';
 
@@ -48,6 +52,7 @@ const Ask = () => {
       value: '',
       isInvalid: false,
       errorMsg: '',
+      content_json: null,
     },
     answer: {
       value: '',
@@ -66,15 +71,17 @@ const Ask = () => {
   const [checked, setCheckState] = useState(false);
   const [contentChanged, setContentChanged] = useState(false);
   const [focusType, setForceType] = useState('');
+  const [modalState, setModalState] = useState<ModalStateType>({ open: false });
+
   const resetForm = () => {
     setFormData(initFormData);
     setCheckState(false);
     setForceType('');
   };
 
-  const editorRef = useRef<EditorRef>({
-    getHtml: () => '',
-  });
+  // const editorRef = useRef<EditorRef>({
+  //   getHtml: () => '',
+  // });
   const editorRef2 = useRef<EditorRef>({
     getHtml: () => '',
   });
@@ -144,6 +151,7 @@ const Ask = () => {
       return;
     }
     questionDetail(qid).then((res) => {
+      console.log('res 编辑问题', res);
       formData.title.value = res.title;
       formData.content.value = res.content;
       formData.tags.value = res.tags.map((item) => {
@@ -164,12 +172,12 @@ const Ask = () => {
       title: { ...formData.title, value: e.currentTarget.value, errorMsg: '' },
     });
   };
-  const handleContentChange = (value: string) => {
-    setFormData({
-      ...formData,
-      content: { ...formData.content, value, errorMsg: '' },
-    });
-  };
+  // const handleContentChange = (value: string) => {
+  //   setFormData({
+  //     ...formData,
+  //     content: { ...formData.content, value, errorMsg: '' },
+  //   });
+  // };
   const handleTagsChange = (value) =>
     setFormData({
       ...formData,
@@ -232,6 +240,7 @@ const Ask = () => {
           postAnswer({
             question_id: id,
             content: formData.answer.value,
+            content_json: null,
           })
             .then(() => {
               navigate(pathFactory.questionLanding(id, params.url_title));
@@ -321,7 +330,44 @@ const Ask = () => {
                 isInvalid={formData.content.isInvalid}
                 hidden
               />
-              <Editor
+              <TextEditor
+                // @ts-ignore
+                initialState={formData.content.value}
+                onInsert={(type, callback_) => {
+                  if (type === 'image') {
+                    setModalState({
+                      open: true,
+                      onInsert: (link) => {
+                        callback_({ src: link.value, title: '' });
+                      },
+                    });
+                  }
+                }}
+                style={{
+                  height: '400px',
+                  border: '1px #d9d9d9 solid',
+                }}
+                onChange={(editorState, editor) => {
+                  editor.update(async () => {
+                    const state = editorState.toJSON();
+                    const content = await generateHtmlFromState(state);
+                    setFormData((pre) => {
+                      return {
+                        ...pre,
+                        ...{
+                          content: {
+                            value: content,
+                            isInvalid: false,
+                            errorMsg: '',
+                            content_json: state,
+                          },
+                        },
+                      };
+                    });
+                  });
+                }}
+              />
+              {/* <Editor
                 value={formData.content.value}
                 onChange={handleContentChange}
                 className={classNames(
@@ -335,7 +381,7 @@ const Ask = () => {
                   setForceType('');
                 }}
                 ref={editorRef}
-              />
+              /> */}
               <Form.Control.Feedback type="invalid">
                 {formData.content.errorMsg}
               </Form.Control.Feedback>
@@ -430,20 +476,15 @@ const Ask = () => {
             )}
           </Form>
         </Col>
-        <Col xxl={3} lg={4} sm={12} className="mt-5 mt-lg-0">
-          <Card>
-            <Card.Header>
-              {t('title', { keyPrefix: 'how_to_format' })}
-            </Card.Header>
-            <Card.Body
-              className="fmt small"
-              dangerouslySetInnerHTML={{
-                __html: t('desc', { keyPrefix: 'how_to_format' }),
-              }}
-            />
-          </Card>
-        </Col>
+        <Col xxl={3} lg={4} sm={12} className="mt-5 mt-lg-0" />
       </Row>
+      {modalState.open && (
+        <MaterialModal
+          visible={modalState.open}
+          setModalState={setModalState}
+          onInsert={modalState?.onInsert}
+        />
+      )}
     </Container>
   );
 };

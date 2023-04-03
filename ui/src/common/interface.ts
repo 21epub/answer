@@ -71,6 +71,7 @@ export interface AnswerParams {
   question_id: string;
   id: string;
   edit_summary?: string;
+  content_json: Record<string, any> | null;
 }
 
 export interface LoginReqParams {
@@ -209,6 +210,7 @@ export interface PostAnswerReq {
   content: string;
   html?: string;
   question_id: string;
+  content_json: Record<string, any> | null;
 }
 
 export interface PageUser {

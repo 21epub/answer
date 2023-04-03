@@ -32,6 +32,7 @@ const Index: FC<Props> = ({ visible = false, data, callback }) => {
       value: '',
       isInvalid: false,
       errorMsg: '',
+      content_json: null,
     },
   });
   const [showEditor, setShowEditor] = useState<boolean>(visible);
@@ -43,42 +44,16 @@ const Index: FC<Props> = ({ visible = false, data, callback }) => {
     when: Boolean(formData.content.value),
   });
 
-  const checkValidated = (): boolean => {
-    let bol = true;
-    const { content } = formData;
-
-    if (!content.value || Array.from(content.value.trim()).length < 6) {
-      bol = false;
-      formData.content = {
-        value: content.value,
-        isInvalid: true,
-        errorMsg: t('characters'),
-      };
-    } else {
-      formData.content = {
-        value: content.value,
-        isInvalid: false,
-        errorMsg: '',
-      };
-    }
-
-    setFormData({
-      ...formData,
-    });
-    return bol;
-  };
-
   const handleSubmit = () => {
     if (!guard.tryNormalLogged(true)) {
       return;
     }
-    if (!checkValidated()) {
-      return;
-    }
+
     postAnswer({
       question_id: data?.qid,
       content: formData.content.value,
       html: marked.parse(formData.content.value),
+      content_json: formData.content.content_json,
     })
       .then((res) => {
         setShowEditor(false);
@@ -87,6 +62,7 @@ const Index: FC<Props> = ({ visible = false, data, callback }) => {
             value: '',
             isInvalid: false,
             errorMsg: '',
+            content_json: null,
           },
         });
         callback?.(res.info);
@@ -174,9 +150,14 @@ const Index: FC<Props> = ({ visible = false, data, callback }) => {
                 editor.update(async () => {
                   const state = editorState.toJSON();
                   const content = await generateHtmlFromState(state);
-                  console.log('content', content);
-                  // form?.setFieldsValue({state})
-                  // form?.setFieldsValue({content})
+                  setFormData({
+                    content: {
+                      value: content,
+                      isInvalid: false,
+                      errorMsg: '',
+                      content_json: state,
+                    },
+                  });
                 });
               }}
             />
