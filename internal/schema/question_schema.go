@@ -45,7 +45,7 @@ type QuestionAdd struct {
 	// content
 	Content string `validate:"required,notblank,gte=6,lte=65535" json:"content"`
 	// html
-	HTML string `json:"html"`
+	HTML string `json:"-"`
 	// tags
 	Tags []*TagItem `validate:"required,dive" json:"tags"`
 	// user id
@@ -96,7 +96,7 @@ type QuestionUpdate struct {
 	// content
 	Content string `validate:"required,notblank,gte=6,lte=65535" json:"content"`
 	// html
-	HTML string `json:"html"`
+	HTML string `json:"-"`
 	// tags
 	Tags []*TagItem `validate:"required,dive" json:"tags"`
 	// edit summary
