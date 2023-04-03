@@ -1,23 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import dayjs from 'dayjs';
-import classNames from 'classnames';
+// import classNames from 'classnames';
+import { generateHtmlFromState, TextEditor } from '@21epub-ui/text-editor';
 
 import { handleFormError } from '@/utils';
 import { usePageTags, usePromptWithUnload } from '@/hooks';
 import { pathFactory } from '@/router/pathFactory';
-import { Editor, EditorRef, Icon } from '@/components';
+import { Icon } from '@/components';
 import type * as Type from '@/common/interface';
 import {
   useQueryAnswerInfo,
   modifyAnswer,
   useQueryRevisions,
 } from '@/services';
-
 import './index.scss';
+import MaterialModal, {
+  ModalStateType,
+} from '../Detail/components/WriteAnswer/MaterialModal';
 
 interface FormDataItem {
   content: Type.FormValue<string>;
@@ -28,6 +31,7 @@ const initFormData = {
     value: '',
     isInvalid: false,
     errorMsg: '',
+    content_json: null,
   },
   description: {
     value: '',
@@ -37,23 +41,20 @@ const initFormData = {
 };
 const Index = () => {
   const { aid = '', qid = '' } = useParams();
-  const [focusType, setForceType] = useState('');
+  // const [focusType, setForceType] = useState('');
 
   const { t } = useTranslation('translation', { keyPrefix: 'edit_answer' });
   const navigate = useNavigate();
 
   const { data } = useQueryAnswerInfo(aid);
   const [formData, setFormData] = useState<FormDataItem>(initFormData);
-  const [immData, setImmData] = useState(initFormData);
+  const [immData] = useState(initFormData);
   const [contentChanged, setContentChanged] = useState(false);
+  const [modalState, setModalState] = useState<ModalStateType>({ open: false });
 
   initFormData.content.value = data?.info.content || '';
 
   const { data: revisions = [] } = useQueryRevisions(aid);
-
-  const editorRef = useRef<EditorRef>({
-    getHtml: () => '',
-  });
 
   const questionContentRef = useRef<HTMLDivElement>(null);
 
@@ -70,11 +71,11 @@ const Index = () => {
     }
   }, [formData.content.value, formData.description.value]);
 
-  const handleAnswerChange = (value: string) =>
-    setFormData({
-      ...formData,
-      content: { ...formData.content, value },
-    });
+  // const handleAnswerChange = (value: string) =>
+  //   setFormData({
+  //     ...formData,
+  //     content: { ...formData.content, value },
+  //   });
   const handleSummaryChange = (evt) => {
     const v = evt.currentTarget.value;
     setFormData({
@@ -83,46 +84,19 @@ const Index = () => {
     });
   };
 
-  const checkValidated = (): boolean => {
-    let bol = true;
-    const { content } = formData;
-
-    if (!content.value || Array.from(content.value.trim()).length < 6) {
-      bol = false;
-      formData.content = {
-        value: content.value,
-        isInvalid: true,
-        errorMsg: t('form.fields.answer.feedback.characters'),
-      };
-    } else {
-      formData.content = {
-        value: content.value,
-        isInvalid: false,
-        errorMsg: '',
-      };
-    }
-
-    setFormData({
-      ...formData,
-    });
-    return bol;
-  };
-
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     setContentChanged(false);
 
     event.preventDefault();
     event.stopPropagation();
-    if (!checkValidated()) {
-      return;
-    }
 
     const params: Type.AnswerParams = {
       content: formData.content.value,
-      html: editorRef.current.getHtml(),
+      html: formData.content.value,
       question_id: qid,
       id: aid,
       edit_summary: formData.description.value,
+      content_json: formData.content.content_json,
     };
     modifyAnswer(params)
       .then((res) => {
@@ -148,7 +122,7 @@ const Index = () => {
     const index = e.target.value;
     const revision = revisions[index];
     formData.content.value = revision.content.content;
-    setImmData({ ...formData });
+    // setImmData({ ...formData });
     setFormData({ ...formData });
   };
 
@@ -158,6 +132,7 @@ const Index = () => {
   usePageTags({
     title: t('edit_answer', { keyPrefix: 'page_title' }),
   });
+
   return (
     <Container className="pt-4 mt-2 mb-5 edit-answer-wrap">
       <Row className="justify-content-center">
@@ -210,28 +185,40 @@ const Index = () => {
 
             <Form.Group controlId="answer" className="mt-3">
               <Form.Label>{t('form.fields.answer.label')}</Form.Label>
-              <Editor
-                value={formData.content.value}
-                onChange={handleAnswerChange}
-                className={classNames(
-                  'form-control p-0',
-                  focusType === 'answer' && 'focus',
-                )}
-                onFocus={() => {
-                  setForceType('answer');
-                }}
-                onBlur={() => {
-                  setForceType('');
-                }}
-                ref={editorRef}
-              />
-              <Form.Control
-                value={formData.content.value}
-                type="text"
-                isInvalid={formData.content.isInvalid}
-                readOnly
-                hidden
-              />
+              {data?.info && (
+                <TextEditor
+                  initialState={data?.info?.content_json}
+                  onInsert={(type, callback_) => {
+                    if (type === 'image') {
+                      setModalState({
+                        open: true,
+                        onInsert: (link) => {
+                          callback_({ src: link.value, title: '' });
+                        },
+                      });
+                    }
+                  }}
+                  style={{
+                    height: '400px',
+                    border: '1px #d9d9d9 solid',
+                  }}
+                  onChange={(editorState, editor) => {
+                    editor.update(async () => {
+                      const state = editorState.toJSON();
+                      const content = await generateHtmlFromState(state);
+                      setFormData({
+                        ...formData,
+                        content: {
+                          value: content,
+                          isInvalid: false,
+                          errorMsg: '',
+                          content_json: state,
+                        },
+                      });
+                    });
+                  }}
+                />
+              )}
               <Form.Control.Feedback type="invalid">
                 {formData.content.errorMsg}
               </Form.Control.Feedback>
@@ -258,21 +245,16 @@ const Index = () => {
                 {t('btn_cancel')}
               </Button>
             </div>
+            {modalState.open && (
+              <MaterialModal
+                visible={modalState.open}
+                setModalState={setModalState}
+                onInsert={modalState?.onInsert}
+              />
+            )}
           </Form>
         </Col>
-        <Col xxl={3} lg={4} sm={12} className="mt-5 mt-lg-0">
-          <Card>
-            <Card.Header>
-              {t('title', { keyPrefix: 'how_to_format' })}
-            </Card.Header>
-            <Card.Body
-              className="fmt small"
-              dangerouslySetInnerHTML={{
-                __html: t('desc', { keyPrefix: 'how_to_format' }),
-              }}
-            />
-          </Card>
-        </Col>
+        <Col xxl={3} lg={4} sm={12} className="mt-5 mt-lg-0" />
       </Row>
     </Container>
   );

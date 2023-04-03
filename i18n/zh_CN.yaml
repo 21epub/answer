@@ -1362,4 +1362,13 @@ ui:
   prompt:
     leave_page: "Are you sure you want to leave the page?"
     changes_not_save: "Your changes may not be saved."
-
+  epub360:
+    tags:
+      popular_tags: 热门话题
+      home_more: 查看更多…
+    home:
+      active_users_without_colon: "活跃用户"
+    personal:
+      my_answers: 我的回答
+      my_questions: 我的问题
+      my_reputation: 我的声望
