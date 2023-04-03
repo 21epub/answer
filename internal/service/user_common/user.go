@@ -22,6 +22,7 @@ type UserRepo interface {
 	UpdateEmailStatus(ctx context.Context, userID string, emailStatus int) error
 	UpdateNoticeStatus(ctx context.Context, userID string, noticeStatus int) error
 	UpdateEmail(ctx context.Context, userID, email string) error
+	UpdateDisplayName(ctx context.Context, userID, DisplayName string) error
 	UpdateLanguage(ctx context.Context, userID, language string) error
 	UpdatePass(ctx context.Context, userID, pass string) error
 	UpdateInfo(ctx context.Context, userInfo *entity.User) (err error)
