@@ -151,7 +151,7 @@ const Ask = () => {
       return;
     }
     questionDetail(qid).then((res) => {
-      console.log('content.value 编辑问题', content.value);
+      console.log('res 编辑问题', res);
       formData.title.value = res.title;
       formData.content.value = res.content;
       formData.tags.value = res.tags.map((item) => {
