@@ -1,27 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Container, Row, Col, Form, Button } from 'react-bootstrap';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Button, Col, Container, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import dayjs from 'dayjs';
-import classNames from 'classnames';
-import { isEqual } from 'lodash';
-import { generateHtmlFromState, TextEditor } from '@21epub-ui/text-editor';
-
-import { usePageTags, usePromptWithUnload } from '@/hooks';
-import { Editor, EditorRef, TagSelector } from '@/components';
-import type * as Type from '@/common/interface';
 import {
-  saveQuestion,
-  questionDetail,
-  modifyQuestion,
-  useQueryRevisions,
-  postAnswer,
-  useQueryQuestionByTitle,
+  generateHtmlFromState,
+  LexicalEditor,
+  SerializedEditorState,
+  TextEditor,
+} from '@21epub-ui/text-editor';
+// import classNames from 'classnames';
+import dayjs from 'dayjs';
+
+import type * as Type from '@/common/interface';
+import { TagSelector } from '@/components';
+import { usePageTags } from '@/hooks';
+import { pathFactory } from '@/router/pathFactory';
+import {
   getTagsBySlugName,
+  modifyQuestion,
+  postAnswer,
+  questionDetail,
+  saveQuestion,
+  useQueryQuestionByTitle,
+  useQueryRevisions,
 } from '@/services';
 import { handleFormError } from '@/utils';
-import { pathFactory } from '@/router/pathFactory';
 import MaterialModal, {
   ModalStateType,
 } from '../Detail/components/WriteAnswer/MaterialModal';
@@ -31,8 +35,7 @@ import SearchQuestion from './components/SearchQuestion';
 interface FormDataItem {
   title: Type.FormValue<string>;
   tags: Type.FormValue<Type.Tag[]>;
-  content: Type.FormValue<string>;
-  answer: Type.FormValue<string>;
+  content: Type.FormValue<SerializedEditorState | undefined>;
   edit_summary: Type.FormValue<string>;
 }
 
@@ -49,13 +52,7 @@ const Ask = () => {
       errorMsg: '',
     },
     content: {
-      value: '',
-      isInvalid: false,
-      errorMsg: '',
-      content_json: null,
-    },
-    answer: {
-      value: '',
+      value: undefined,
       isInvalid: false,
       errorMsg: '',
     },
@@ -67,24 +64,19 @@ const Ask = () => {
   };
   const { t } = useTranslation('translation', { keyPrefix: 'ask' });
   const [formData, setFormData] = useState<FormDataItem>(initFormData);
-  const [immData, setImmData] = useState<FormDataItem>(initFormData);
+  const [, setImmData] = useState<FormDataItem>(initFormData);
   const [checked, setCheckState] = useState(false);
-  const [contentChanged, setContentChanged] = useState(false);
-  const [focusType, setForceType] = useState('');
+  const [, setContentChanged] = useState(false);
   const [modalState, setModalState] = useState<ModalStateType>({ open: false });
+  const [, setForceType] = useState('');
+
+  const editorRef = useRef<LexicalEditor>();
 
   const resetForm = () => {
     setFormData(initFormData);
     setCheckState(false);
     setForceType('');
   };
-
-  // const editorRef = useRef<EditorRef>({
-  //   getHtml: () => '',
-  // });
-  const editorRef2 = useRef<EditorRef>({
-    getHtml: () => '',
-  });
 
   const { qid } = useParams();
   const navigate = useNavigate();
@@ -105,38 +97,38 @@ const Ask = () => {
     isEdit ? '' : formData.title.value,
   );
 
-  useEffect(() => {
-    const { title, tags, content, answer } = formData;
-    const { title: editTitle, tags: editTags, content: editContent } = immData;
+  // useEffect(() => {
+  //   const { title, tags, content } = formData;
+  //   const { title: editTitle, tags: editTags, content: editContent } = immData;
 
-    // edited
-    if (qid) {
-      if (
-        editTitle.value !== title.value ||
-        editContent.value !== content.value ||
-        !isEqual(
-          editTags.value.map((v) => v.slug_name),
-          tags.value.map((v) => v.slug_name),
-        )
-      ) {
-        setContentChanged(true);
-      } else {
-        setContentChanged(false);
-      }
-      return;
-    }
+  //   // edited
+  //   if (qid) {
+  //     if (
+  //       editTitle.value !== title.value ||
+  //       editContent.value !== content.value ||
+  //       !isEqual(
+  //         editTags.value.map((v) => v.slug_name),
+  //         tags.value.map((v) => v.slug_name),
+  //       )
+  //     ) {
+  //       setContentChanged(true);
+  //     } else {
+  //       setContentChanged(false);
+  //     }
+  //     return;
+  //   }
 
-    // write
-    if (title.value || tags.value.length > 0 || content.value || answer.value) {
-      setContentChanged(true);
-    } else {
-      setContentChanged(false);
-    }
-  }, [formData]);
+  //   // write
+  //   if (title.value || tags.value.length > 0 || content.value || answer.value) {
+  //     setContentChanged(true);
+  //   } else {
+  //     setContentChanged(false);
+  //   }
+  // }, [formData]);
 
-  usePromptWithUnload({
-    when: contentChanged,
-  });
+  // usePromptWithUnload({
+  //   when: contentChanged,
+  // });
 
   useEffect(() => {
     if (!isEdit) {
@@ -146,6 +138,16 @@ const Ask = () => {
   }, [isEdit]);
   const { data: revisions = [] } = useQueryRevisions(qid);
 
+  const updateEditorState = (state: SerializedEditorState) => {
+    const editor = editorRef.current;
+
+    if (editor === undefined) return;
+
+    editor.update(() => {
+      editor.setEditorState(editor.parseEditorState(state));
+    });
+  };
+
   useEffect(() => {
     if (!isEdit) {
       return;
@@ -153,7 +155,7 @@ const Ask = () => {
     questionDetail(qid).then((res) => {
       console.log('res 编辑问题', res);
       formData.title.value = res.title;
-      formData.content.value = res.content;
+      formData.content.value = res.content_json;
       formData.tags.value = res.tags.map((item) => {
         return {
           ...item,
@@ -163,6 +165,7 @@ const Ask = () => {
       });
       setImmData({ ...formData });
       setFormData({ ...formData });
+      updateEditorState(res.content_json);
     });
   }, [qid]);
 
@@ -172,7 +175,7 @@ const Ask = () => {
       title: { ...formData.title, value: e.currentTarget.value, errorMsg: '' },
     });
   };
-  // const handleContentChange = (value: string) => {
+  // const handleContentChange = (value: SerializedEditorState) => {
   //   setFormData({
   //     ...formData,
   //     content: { ...formData.content, value, errorMsg: '' },
@@ -184,11 +187,11 @@ const Ask = () => {
       tags: { ...formData.tags, value, errorMsg: '' },
     });
 
-  const handleAnswerChange = (value: string) =>
-    setFormData({
-      ...formData,
-      answer: { ...formData.answer, value, errorMsg: '' },
-    });
+  // const handleAnswerChange = (value: string) =>
+  //   setFormData({
+  //     ...formData,
+  //     answer: { ...formData.answer, value, errorMsg: '' },
+  //   });
 
   const handleSummaryChange = (evt: React.ChangeEvent<HTMLInputElement>) =>
     setFormData({
@@ -206,7 +209,11 @@ const Ask = () => {
 
     const params: Type.QuestionParams = {
       title: formData.title.value,
-      content: formData.content.value,
+      html: formData.content.value
+        ? await generateHtmlFromState(formData.content.value)
+        : '',
+      content: editorRef.current?.getRootElement()?.innerText ?? '',
+      content_json: formData.content.value ?? null,
       tags: formData.tags.value,
     };
     if (isEdit) {
@@ -239,8 +246,11 @@ const Ask = () => {
         if (checked) {
           postAnswer({
             question_id: id,
-            content: formData.answer.value,
-            content_json: null,
+            html: formData.content.value
+              ? await generateHtmlFromState(formData.content.value)
+              : '',
+            content: editorRef.current?.getRootElement()?.innerText ?? '',
+            content_json: formData.content.value ?? null,
           })
             .then(() => {
               navigate(pathFactory.questionLanding(id, params.url_title));
@@ -266,9 +276,10 @@ const Ask = () => {
   const handleSelectedRevision = (e) => {
     const index = e.target.value;
     const revision = revisions[index];
-    formData.content.value = revision.content.content;
+    formData.content.value = revision.content.content_json;
     setImmData({ ...formData });
     setFormData({ ...formData });
+    updateEditorState(revision.content.content_json);
   };
   const bool = similarQuestions.length > 0 && !isEdit;
   let pageTitle = t('ask_a_question', { keyPrefix: 'page_title' });
@@ -279,205 +290,152 @@ const Ask = () => {
     title: pageTitle,
   });
   return (
-    <Container className="pt-4 mt-2 mb-5">
-      <Row className="justify-content-center">
-        <Col xxl={10} md={12}>
-          <h3 className="mb-4">{isEdit ? t('edit_title') : t('title')}</h3>
-        </Col>
-      </Row>
-      <Row className="justify-content-center">
-        <Col xxl={7} lg={8} sm={12} className="mb-4 mb-md-0">
-          <Form noValidate onSubmit={handleSubmit}>
-            {isEdit && (
-              <Form.Group controlId="revision" className="mb-3">
-                <Form.Label>{t('form.fields.revision.label')}</Form.Label>
-                <Form.Select onChange={handleSelectedRevision}>
-                  {revisions.map(({ reason, create_at, user_info }, index) => {
-                    const date = dayjs(create_at * 1000)
-                      .tz()
-                      .format(t('long_date_with_time', { keyPrefix: 'dates' }));
-                    return (
-                      <option key={`${create_at}`} value={index}>
-                        {`${date} - ${user_info.display_name} - ${
-                          reason || t('default_reason')
-                        }`}
-                      </option>
-                    );
-                  })}
-                </Form.Select>
+    <>
+      <Container className="pt-4 mt-2 mb-5">
+        <Row className="justify-content-center">
+          <Col xxl={10} md={12}>
+            <h3 className="mb-4">{isEdit ? t('edit_title') : t('title')}</h3>
+          </Col>
+        </Row>
+        <Row className="justify-content-center">
+          <Col xxl={7} lg={8} sm={12} className="mb-4 mb-md-0">
+            <Form noValidate onSubmit={handleSubmit}>
+              {isEdit && (
+                <Form.Group controlId="revision" className="mb-3">
+                  <Form.Label>{t('form.fields.revision.label')}</Form.Label>
+                  <Form.Select onChange={handleSelectedRevision}>
+                    {revisions.map(
+                      ({ reason, create_at, user_info }, index) => {
+                        const date = dayjs(create_at * 1000)
+                          .tz()
+                          .format(
+                            t('long_date_with_time', { keyPrefix: 'dates' }),
+                          );
+                        return (
+                          <option key={`${create_at}`} value={index}>
+                            {`${date} - ${user_info.display_name} - ${
+                              reason || t('default_reason')
+                            }`}
+                          </option>
+                        );
+                      },
+                    )}
+                  </Form.Select>
+                </Form.Group>
+              )}
+
+              <Form.Group controlId="title" className="mb-3">
+                <Form.Label>{t('form.fields.title.label')}</Form.Label>
+                <Form.Control
+                  value={formData.title.value}
+                  isInvalid={formData.title.isInvalid}
+                  onChange={handleTitleChange}
+                  placeholder={t('form.fields.title.placeholder')}
+                  autoFocus
+                />
+
+                <Form.Control.Feedback type="invalid">
+                  {formData.title.errorMsg}
+                </Form.Control.Feedback>
+                {bool && <SearchQuestion similarQuestions={similarQuestions} />}
               </Form.Group>
-            )}
-
-            <Form.Group controlId="title" className="mb-3">
-              <Form.Label>{t('form.fields.title.label')}</Form.Label>
-              <Form.Control
-                value={formData.title.value}
-                isInvalid={formData.title.isInvalid}
-                onChange={handleTitleChange}
-                placeholder={t('form.fields.title.placeholder')}
-                autoFocus
-              />
-
-              <Form.Control.Feedback type="invalid">
-                {formData.title.errorMsg}
-              </Form.Control.Feedback>
-              {bool && <SearchQuestion similarQuestions={similarQuestions} />}
-            </Form.Group>
-            <Form.Group controlId="body">
-              <Form.Label>{t('form.fields.body.label')}</Form.Label>
-              <Form.Control
+              <Form.Group controlId="body">
+                <Form.Label>{t('form.fields.body.label')}</Form.Label>
+                {/* <Form.Control
                 defaultValue={formData.content.value}
                 isInvalid={formData.content.isInvalid}
                 hidden
-              />
-              <TextEditor
-                // @ts-ignore
-                initialState={formData.content.value}
-                onInsert={(type, callback_) => {
-                  if (type === 'image') {
-                    setModalState({
-                      open: true,
-                      onInsert: (link) => {
-                        callback_({ src: link.value, title: '' });
-                      },
-                    });
-                  }
-                }}
-                style={{
-                  height: '400px',
-                  border: '1px #d9d9d9 solid',
-                }}
-                onChange={(editorState, editor) => {
-                  editor.update(async () => {
-                    const state = editorState.toJSON();
-                    const content = await generateHtmlFromState(state);
-                    setFormData((pre) => {
-                      return {
-                        ...pre,
-                        ...{
-                          content: {
-                            value: content,
-                            isInvalid: false,
-                            errorMsg: '',
-                            content_json: state,
-                          },
-                        },
-                      };
-                    });
-                  });
-                }}
-              />
-              {/* <Editor
-                value={formData.content.value}
-                onChange={handleContentChange}
-                className={classNames(
-                  'form-control p-0',
-                  focusType === 'content' && 'focus',
-                )}
-                onFocus={() => {
-                  setForceType('content');
-                }}
-                onBlur={() => {
-                  setForceType('');
-                }}
-                ref={editorRef}
               /> */}
-              <Form.Control.Feedback type="invalid">
-                {formData.content.errorMsg}
-              </Form.Control.Feedback>
-            </Form.Group>
-            <Form.Group controlId="tags" className="my-3">
-              <Form.Label>{t('form.fields.tags.label')}</Form.Label>
-              <Form.Control
-                defaultValue={JSON.stringify(formData.tags.value)}
-                isInvalid={formData.tags.isInvalid}
-                hidden
-              />
-              <TagSelector
-                value={formData.tags.value}
-                onChange={handleTagsChange}
-                showRequiredTagText
-              />
-              <Form.Control.Feedback type="invalid">
-                {formData.tags.errorMsg}
-              </Form.Control.Feedback>
-            </Form.Group>
-            {isEdit && (
-              <Form.Group controlId="edit_summary" className="my-3">
-                <Form.Label>{t('form.fields.edit_summary.label')}</Form.Label>
-                <Form.Control
-                  type="text"
-                  defaultValue={formData.edit_summary.value}
-                  isInvalid={formData.edit_summary.isInvalid}
-                  placeholder={t('form.fields.edit_summary.placeholder')}
-                  onChange={handleSummaryChange}
+                <TextEditor
+                  initialState={(editor) => {
+                    editorRef.current = editor;
+                  }}
+                  onInsert={(type, callback_) => {
+                    if (type === 'image') {
+                      setModalState({
+                        open: true,
+                        onInsert: (link) => {
+                          callback_({ src: link.value, title: '' });
+                        },
+                      });
+                    }
+                  }}
+                  style={{
+                    height: '400px',
+                    border: '1px #d9d9d9 solid',
+                  }}
+                  onChange={(editorState, editor) => {
+                    editor.update(async () => {
+                      const state = editorState.toJSON();
+
+                      setFormData((pre) => {
+                        return {
+                          ...pre,
+                          content: {
+                            ...pre.content,
+                            value: state,
+                          },
+                        };
+                      });
+                    });
+                  }}
                 />
                 <Form.Control.Feedback type="invalid">
-                  {formData.edit_summary.errorMsg}
+                  {formData.content.errorMsg}
                 </Form.Control.Feedback>
               </Form.Group>
-            )}
-            {!checked && (
-              <div className="mt-3">
-                <Button type="submit" className="me-2">
-                  {isEdit ? t('btn_save_edits') : t('btn_post_question')}
-                </Button>
-
-                <Button variant="link" onClick={backPage}>
-                  {t('cancel', { keyPrefix: 'btns' })}
-                </Button>
-              </div>
-            )}
-            {!isEdit && (
-              <>
-                <Form.Check
-                  className="mt-5"
-                  checked={checked}
-                  type="checkbox"
-                  label={t('answer_question')}
-                  onChange={(e) => setCheckState(e.target.checked)}
-                  id="radio-answer"
+              <Form.Group controlId="tags" className="my-3">
+                <Form.Label>{t('form.fields.tags.label')}</Form.Label>
+                <Form.Control
+                  defaultValue={JSON.stringify(formData.tags.value)}
+                  isInvalid={formData.tags.isInvalid}
+                  hidden
                 />
-                {checked && (
-                  <Form.Group controlId="answer" className="mt-4">
-                    <Form.Label>{t('form.fields.answer.label')}</Form.Label>
-                    <Editor
-                      value={formData.answer.value}
-                      onChange={handleAnswerChange}
-                      ref={editorRef2}
-                      className={classNames(
-                        'form-control p-0',
-                        focusType === 'answer' && 'focus',
-                      )}
-                      onFocus={() => {
-                        setForceType('answer');
-                      }}
-                      onBlur={() => {
-                        setForceType('');
-                      }}
-                    />
-                    <Form.Control
-                      value={formData.answer.value}
-                      type="text"
-                      isInvalid={formData.answer.isInvalid}
-                      hidden
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {formData.answer.errorMsg}
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                )}
-              </>
-            )}
-            {checked && (
-              <Button type="submit" className="mt-3">
-                {t('post_question&answer')}
-              </Button>
-            )}
-          </Form>
-        </Col>
-        <Col xxl={3} lg={4} sm={12} className="mt-5 mt-lg-0" />
-      </Row>
+                <TagSelector
+                  value={formData.tags.value}
+                  onChange={handleTagsChange}
+                  showRequiredTagText
+                />
+                <Form.Control.Feedback type="invalid">
+                  {formData.tags.errorMsg}
+                </Form.Control.Feedback>
+              </Form.Group>
+              {isEdit && (
+                <Form.Group controlId="edit_summary" className="my-3">
+                  <Form.Label>{t('form.fields.edit_summary.label')}</Form.Label>
+                  <Form.Control
+                    type="text"
+                    defaultValue={formData.edit_summary.value}
+                    isInvalid={formData.edit_summary.isInvalid}
+                    placeholder={t('form.fields.edit_summary.placeholder')}
+                    onChange={handleSummaryChange}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {formData.edit_summary.errorMsg}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              )}
+              {!checked && (
+                <div className="mt-3">
+                  <Button type="submit" className="me-2">
+                    {isEdit ? t('btn_save_edits') : t('btn_post_question')}
+                  </Button>
+
+                  <Button variant="link" onClick={backPage}>
+                    {t('cancel', { keyPrefix: 'btns' })}
+                  </Button>
+                </div>
+              )}
+              {checked && (
+                <Button type="submit" className="mt-3">
+                  {t('post_question&answer')}
+                </Button>
+              )}
+            </Form>
+          </Col>
+          <Col xxl={3} lg={4} sm={12} className="mt-5 mt-lg-0" />
+        </Row>
+      </Container>
       {modalState.open && (
         <MaterialModal
           visible={modalState.open}
@@ -485,7 +443,7 @@ const Ask = () => {
           onInsert={modalState?.onInsert}
         />
       )}
-    </Container>
+    </>
   );
 };
 

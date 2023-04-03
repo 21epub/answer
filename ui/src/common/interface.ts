@@ -1,3 +1,5 @@
+import { SerializedEditorState } from "@21epub-ui/text-editor";
+
 export interface FormValue<T = any> {
   value: T;
   isInvalid: boolean;
@@ -58,6 +60,7 @@ export interface QuestionParams {
   content: string;
   html?: string;
   tags: Tag[];
+  content_json: SerializedEditorState | null;
 }
 
 export interface ListResult<T = any> {
@@ -176,6 +179,7 @@ export interface QuestionDetailRes {
   id: string;
   title: string;
   content: string;
+  content_json:SerializedEditorState;
   html: string;
   tags: any[];
   view_count: number;
@@ -214,7 +218,7 @@ export interface PostAnswerReq {
   content: string;
   html?: string;
   question_id: string;
-  content_json: Record<string, any> | null;
+  content_json: SerializedEditorState | null;
 }
 
 export interface PageUser {
