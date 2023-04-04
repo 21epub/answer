@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import { Card, ListGroup } from 'react-bootstrap';
-import { NavLink, useSearchParams } from 'react-router-dom';
+import { NavLink, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { pathFactory } from '@/router/pathFactory';
@@ -31,6 +31,7 @@ interface Props {
 
 const QuestionList: FC<Props> = ({ source }) => {
   const { t } = useTranslation('translation', { keyPrefix: 'question' });
+  const { tagName = '' } = useParams();
   const [urlSearchParams] = useSearchParams();
   const curOrder = urlSearchParams.get('order') || QuestionOrderKeys[0];
   const curTag = urlSearchParams.get('tag');
@@ -40,7 +41,7 @@ const QuestionList: FC<Props> = ({ source }) => {
     page_size: pageSize,
     page: curPage,
     order: curOrder as Type.QuestionOrderBy,
-    tag: curTag || '',
+    tag: curTag || tagName || '',
   };
 
   const { data: listData, isLoading } = useQuestionList(reqParams);
