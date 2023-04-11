@@ -235,7 +235,7 @@ func (as *AnswerService) Update(ctx context.Context, req *schema.AnswerUpdateReq
 	}
 
 	//If the content is the same, ignore it
-	if answerInfo.OriginalText == req.Content {
+	if answerInfo.ParsedText == req.HTML {
 		return "", nil
 	}
 

@@ -502,7 +502,7 @@ func (qs *QuestionService) UpdateQuestion(ctx context.Context, req *schema.Quest
 	isChange := qs.tagCommon.CheckTagsIsChange(ctx, tagNameList, oldtagNameList)
 
 	//If the content is the same, ignore it
-	if dbinfo.Title == req.Title && dbinfo.OriginalText == req.Content && !isChange {
+	if dbinfo.Title == req.Title && dbinfo.ParsedText == req.HTML && !isChange {
 		return
 	}
 
