@@ -7,7 +7,7 @@ import { SWRConfig } from 'swr';
 import { toastStore, loginToContinueStore } from '@/stores';
 import {
   Header,
-  Footer,
+  // Footer,
   Toast,
   Customize,
   CustomizeTheme,
@@ -34,7 +34,7 @@ const Layout: FC = () => {
           <Outlet />
         </div>
         <Toast msg={toastMsg} variant={variant} onClose={closeToast} />
-        <Footer />
+        {/* <Footer /> */}
         <Customize />
         <LoginToContinueModal visible={showLoginToContinueModal} />
       </SWRConfig>
