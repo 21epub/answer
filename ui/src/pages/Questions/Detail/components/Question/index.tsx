@@ -15,6 +15,7 @@ import {
 import { formatCount, guard } from '@/utils';
 import { following } from '@/services';
 import { pathFactory } from '@/router/pathFactory';
+import { PreviewContainerArticle } from '@/components/EpubPreviewContainer';
 
 interface Props {
   data: any;
@@ -106,7 +107,7 @@ const Index: FC<Props> = ({ data, initPage, hasAnswer, isLogged }) => {
           return <Tag className="m-1" key={item.slug_name} data={item} />;
         })}
       </div>
-      <article
+      <PreviewContainerArticle
         ref={ref}
         dangerouslySetInnerHTML={{ __html: data?.html }}
         className="fmt text-break text-wrap mt-4"

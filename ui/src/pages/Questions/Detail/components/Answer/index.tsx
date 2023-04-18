@@ -15,6 +15,7 @@ import {
 import { scrollToElementTop, bgFadeOut } from '@/utils';
 import { AnswerItem } from '@/common/interface';
 import { acceptanceAnswer } from '@/services';
+import { PreviewContainerArticle } from '@/components/EpubPreviewContainer';
 
 interface Props {
   data: AnswerItem;
@@ -72,7 +73,7 @@ const Index: FC<Props> = ({
   }
   return (
     <div id={data.id} ref={answerRef} className="answer-item py-4">
-      <article
+      <PreviewContainerArticle
         dangerouslySetInnerHTML={{ __html: data?.html }}
         className="fmt text-break text-wrap"
       />
