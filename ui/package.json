@@ -13,7 +13,7 @@
     "pre-commit": "lint-staged"
   },
   "dependencies": {
-    "@21epub-ui/text-editor": "0.5.1",
+    "@21epub-ui/text-editor": "0.6.0",
     "@emotion/styled": "^11.10.6",
     "axios": "^0.27.2",
     "bootstrap": "^5.2.0",
