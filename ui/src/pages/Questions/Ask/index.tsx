@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Col, Container, Form, Row } from 'react-bootstrap';
+import { Button, Col, Container, Form, Modal, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
@@ -69,6 +69,7 @@ const Ask = () => {
   const [, setContentChanged] = useState(false);
   const [modalState, setModalState] = useState<ModalStateType>({ open: false });
   const [, setForceType] = useState('');
+  const [showErr, setShowErr] = useState(false);
 
   const editorRef = useRef<LexicalEditor>();
 
@@ -238,6 +239,7 @@ const Ask = () => {
         if (err.isError) {
           const data = handleFormError(err, formData);
           setFormData({ ...data });
+          setShowErr(true);
         }
       });
 
@@ -436,6 +438,12 @@ const Ask = () => {
           <Col xxl={3} lg={4} sm={12} className="mt-5 mt-lg-0" />
         </Row>
       </Container>
+      <Modal show={showErr} onHide={() => setShowErr(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>提交失败</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{formData.content.errorMsg}</Modal.Body>
+      </Modal>
       {modalState.open && (
         <MaterialModal
           visible={modalState.open}
