@@ -21,6 +21,7 @@ import './index.scss';
 import MaterialModal, {
   ModalStateType,
 } from '../Detail/components/WriteAnswer/MaterialModal';
+import { PreviewContainer } from '@/components/EpubPreviewContainer';
 
 interface FormDataItem {
   content: Type.FormValue<string>;
@@ -150,7 +151,7 @@ const Index = () => {
           </a>
 
           <div className="question-content-wrap">
-            <div
+            <PreviewContainer
               ref={questionContentRef}
               className="content position-absolute top-0 w-100"
               dangerouslySetInnerHTML={{ __html: data?.question.html }}
