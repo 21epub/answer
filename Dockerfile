@@ -1,9 +1,12 @@
+ARG SSO_PREFIX
+
 FROM amd64/node AS node-builder
 
 LABEL maintainer="mingcheng<mc@sf.com>"
 
 COPY . /answer
 WORKDIR /answer
+RUN echo SSO_PREFIX=$SSO_PREFIX >> ui/.env.production
 RUN make install-ui-packages ui && mv ui/build /tmp
 
 # stage2 build the main binary within static resource
